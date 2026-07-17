@@ -1,0 +1,67 @@
+# Virtual Output - ESP8266 example.
+# Browse to http://<ip>:8082/ and press LISTEN (browser autoplay policy).
+esphome:
+  name: buzzer-virtuel
+
+esp8266:
+  board: d1_mini
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # power_save_mode: none is already the ESP8266 default.
+
+logger:
+api:
+ota:
+  - platform: esphome
+
+external_components:
+  - source: github://kaboom748/virtual_output
+    components: [virtual_output]
+    refresh: 1d
+
+output:
+  - platform: virtual_output
+    id: buzzer
+    port: 8082
+    # inverted / min_power / max_power also work here: FloatOutput applies them
+    # before write_state(), so the browser gets the duty the pin would carry.
+
+rtttl:
+  id: sonnerie
+  output: buzzer
+  gain: 60%
+  on_finished_playback:
+    - logger.log: "Fin de la sonnerie"
+
+button:
+  - platform: template
+    name: "Test sonnerie"
+    on_press:
+      # c,c is a repeated note: rtttl inserts a 10 ms gap. Watch Events go up by
+      # 4, not 3 -- if it goes up by 3 the gap got swallowed somewhere.
+      - rtttl.play: "test:d=4,o=5,b=200:c,c,e"
+
+  - platform: template
+    name: "Sirene"
+    on_press:
+      - rtttl.play: "siren:d=8,o=5,b=100:d,e,d,e,d,e,d,e"
+
+# Echafaudage de test: joue tout seul, sans Home Assistant. Le button: ci-dessus
+# n'est atteignable que depuis HA -- sans HA, personne ne peut appuyer dessus, et
+# le panneau affiche Events: 0 pour toujours. Retire ce bloc quand tu as entendu
+# le c,c,e.
+interval:
+  - interval: 5s
+    then:
+      - rtttl.play: "test:d=4,o=5,b=200:c,c,e"
+
+# To move to a real passive buzzer, replace the output block above with:
+#
+#   output:
+#     - platform: esp8266_pwm     # or: ledc, on ESP32
+#       id: buzzer
+#       pin: D5                   # or: GPIO19
+#
+# Nothing else changes. The rtttl block, the gain and the automations stay put.

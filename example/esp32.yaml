@@ -1,0 +1,53 @@
+# Virtual Output - ESP32 example. Identical to the ESP8266 one except this block.
+esphome:
+  name: buzzer-virtuel32
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # power_save_mode: none
+  #   Leave the default (light) on the first run and read the Jitter line in the
+  #   browser panel. At ~100 B/s the throughput wall that forces `none` for audio
+  #   streaming does not exist here, so this is a setting, not a requirement.
+  #   Uncommenting it blind means guessing instead of measuring.
+
+logger:
+api:
+ota:
+  - platform: esphome
+
+external_components:
+  - source: github://kaboom748/virtual_output
+    components: [virtual_output]
+    refresh: 1d
+
+output:
+  - platform: virtual_output
+    id: buzzer
+    port: 8082
+
+rtttl:
+  id: sonnerie
+  output: buzzer
+  gain: 60%
+
+button:
+  - platform: template
+    name: "Test sonnerie"
+    on_press:
+      - rtttl.play: "test:d=4,o=5,b=200:c,c,e"
+
+# Echafaudage de test: joue tout seul, sans Home Assistant. Le button: ci-dessus
+# n'est atteignable que depuis HA -- sans HA, personne ne peut appuyer dessus, et
+# le panneau affiche Events: 0 pour toujours. Retire ce bloc quand tu as entendu
+# le c,c,e.
+interval:
+  - interval: 5s
+    then:
+      - rtttl.play: "test:d=4,o=5,b=200:c,c,e"
+

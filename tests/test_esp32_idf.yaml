@@ -1,0 +1,30 @@
+# Build target for CI. Kept minimal on purpose: it proves the component
+# compiles and links, not that a particular board is wired up.
+esphome:
+  name: vo-esp32-idf
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+wifi:
+  ssid: "ci"
+  password: "ci-password"
+logger:
+external_components:
+  - source:
+      type: local
+      path: ../components
+    components: [virtual_output]
+output:
+  - platform: virtual_output
+    id: buzzer
+    port: 8082
+rtttl:
+  id: ringtone
+  output: buzzer
+  gain: 60%
+button:
+  - platform: template
+    name: "Test"
+    on_press:
+      - rtttl.play: "test:d=4,o=5,b=200:c,c,e"
